@@ -7,8 +7,10 @@
 
 (defn wrap-parse-edn-body
   [handler]
-  (fn [request]
-    (let [edn-body (edn/read-string (slurp (:body request)))]
-      (handler (-> request
-                   (assoc :edn-body edn-body)
-                   (dissoc :body))))))
+  (fn [{:keys [body] :as request}]
+    (handler
+     (if body
+       (-> request
+           (assoc :edn-body (edn/read-string (slurp body)))
+           (dissoc :body))
+       request))))

@@ -1,15 +1,20 @@
 (ns flashcards.server.response
-  (:require [ring.util.response :as r]
+  (:require [ring.util.mime-type :as mime]
+            [ring.util.response :as r]
             [taoensso.timbre :as log]
             [clojure.string :as str]))
+
+;; convenience 'aliases'
+(def resource r/resource-response)
+(def content-type r/content-type)
+(def header r/header)
+(def status r/status)
 
 (defn edn-response
   [body]
   (-> (r/response body)
-      (r/content-type "application/edn")
-      (r/header "Access-Control-Allow-Origin" "*")))
-
-(def resource r/resource-response)
+      (content-type "application/edn")
+      (header "Access-Control-Allow-Origin" "*")))
 
 (defn ok
   [body]
@@ -18,16 +23,22 @@
 (defn not-found
   [body]
   (-> (edn-response body)
-      (r/status 404)))
+      (status 404)))
 
 (defn access-control
   [origin {:keys [methods headers]}]
   (cond-> (edn-response nil)
-    :always (r/header "Access-Control-Allow-Origin" origin)
-    methods (r/header "Access-Control-Allow-Methods" (str/join "," methods))
-    headers (r/header "Access-Control-Allow-Headers" (str/join "," headers))))
+    :always (header "Access-Control-Allow-Origin" origin)
+    methods (header "Access-Control-Allow-Methods" (str/join "," methods))
+    headers (header "Access-Control-Allow-Headers" (str/join "," headers))))
 
 (defn forbidden
   [body]
   (-> (edn-response body)
-      (r/status 403)))
+      (status 403)))
+
+(defn resource-with-mime-type
+  [file root]
+  (let [mime-type (mime/ext-mime-type file)]
+    (-> (resource file root)
+        (content-type mime-type))))
