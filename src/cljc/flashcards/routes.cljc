@@ -11,19 +11,12 @@
       ["/flashcards" ::api-flashcards]]]
     [[:resource] ::app-resource]]])
 
-;; TODO - Do we want the :methods in here?
-;; Or do they belong in flashcards.handler?
 (def ^:private routes
-  {::api-ping {:handler :api/ping
-               :methods [:get]}
-   ::api-echo {:handler :api/echo
-               :methods [:post]}
-   ::api-flashcards {:handler :api/flashcards
-                     :methods [:options :get :post :delete]}
-   ::app-root {:handler :app/root
-               :methods [:get]}
-   ::app-resource {:handler :app/resource
-                   :methods [:get]}
+  {::api-ping {:handler :api/ping}
+   ::api-echo {:handler :api/echo}
+   ::api-flashcards {:handler :api/flashcards}
+   ::app-root {:handler :app/root}
+   ::app-resource {:handler :app/resource}
    nil {:handler :not-found}})
 
 (defn uri->route

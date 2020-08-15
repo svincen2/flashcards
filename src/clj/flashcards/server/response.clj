@@ -12,13 +12,13 @@
 
 (defn edn-response
   [body]
-  (-> (r/response body)
+  (-> (r/response (if (string? body) body (pr-str body)))
       (content-type "application/edn")
       (header "Access-Control-Allow-Origin" "*")))
 
 (defn ok
   [body]
-  (edn-response (pr-str body)))
+  (edn-response body))
 
 (defn not-found
   [body]

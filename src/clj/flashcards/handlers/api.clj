@@ -15,7 +15,7 @@
 
 (defn ping
   []
-  (r/ok "pong"))
+  (r/ok {:message "pong"}))
 
 (defn echo
   [{:keys [edn-body]}]

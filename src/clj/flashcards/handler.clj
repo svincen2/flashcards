@@ -38,29 +38,25 @@
 ;; NOTE - Bidi style
 ;; TODO - Need to see how this handles reloads / repl changes
 (def ^:private handlers
-  {:app/root (fn [_] (r/resource "index.html" {:root "public"}))
-   :app/resource (fn [{{resource :resource} :route-params}]
-                   (r/resource-with-mime-type resource {:root "public"}))
-   :api/ping (fn [_] (api/ping))
-   :api/echo api/echo
-   :api/flashcards (fn [{:keys [request-method] :as req}]
-                     (case request-method
-                       :options (api/access-control :flashcards req)
-                       :get (api/get-flashcards)
-                       :post (api/create-flashcard req)
-                       :delete (api/delete-flashcard req)))
-   nil (fn [_] (r/not-found nil))})
+  {:app/root {:get (fn [_] (r/resource "index.html" {:root "public"}))}
+   :app/resource {:get (fn [{{resource :resource} :route-params}]
+                         (r/resource-with-mime-type resource {:root "public"}))}
+   :api/ping {:get (fn [_] (api/ping))}
+   :api/echo {:post api/echo}
+   :api/flashcards {:get (fn [_] (api/get-flashcards))
+                    :post api/create-flashcard
+                    :delete api/delete-flashcard
+                    :options (partial api/access-control :flashcards)}})
 
 (def ^:private ring-handler
   (fn [{:keys [uri request-method] :as req}]
-    (let [{:keys [handler
-                  route-params
-                  methods]} (routes/uri->route uri)
-          f (get handlers handler)]
-      (if (contains? (set methods) request-method)
+    (let [{:keys [handler route-params]} (routes/uri->route uri)
+          route-handlers (get handlers handler)
+          f (get route-handlers request-method)]
+      (if f
         (f (cond-> req
              route-params (assoc :route-params route-params)))
-        (r/not-found {:method request-method})))))
+        (r/not-found {:uri uri :method request-method})))))
 
 (def dev-handler (-> #'ring-handler
                      m/wrap-reload
