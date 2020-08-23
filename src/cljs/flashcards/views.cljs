@@ -1,94 +1,180 @@
 (ns flashcards.views
   (:require
    [re-frame.core :as re-frame]
+   [reagent.core :as r]
    [re-com.core :as re-com]
    [components :as comps]
-   [flashcards.subs :as subs]
-   [flashcards.views.flashcards :as fc]
-   [taoensso.timbre :as log]
    [flashcards.events :as events]
+   [flashcards.subs :as subs]
+   [taoensso.timbre :as log]
    ))
 
-;; flashcards
+(defn quiz-panel
+  []
+  (let [quiz-cards (shuffle @(re-frame/subscribe [::subs/flashcards]))
+        revealed? (r/atom false)]
+    (fn []
+      [comps/paginated-panels-component
+       :on-click #(reset! revealed? false)
+       :children (mapv (fn [card]
+                         [re-com/v-box
+                          :gap "1em"
+                          :padding "8px"
+                          :align :center
+                          :children [[re-com/title
+                                      :level :level2
+                                      :label (:question card)]
+                                     [re-com/title
+                                      :level :level3
+                                      :style {:color "gray"
+                                              :cursor (if @revealed? "default" "pointer")}
+                                      :label (if @revealed? (:answer card) "Check answer")
+                                      :attr {:on-click #(reset! revealed? true)}]]])
+                       quiz-cards)])))
+
+(defn new-panel
+  []
+  (let [question (r/atom nil)
+        answer (r/atom nil)]
+    (fn []
+      [re-com/v-box
+       :gap "1em"
+       :padding "8px"
+       :children [[re-com/h-box
+                   :gap "1em"
+                   :children [[re-com/label :label "Q:"]
+                              [re-com/input-text
+                               :model question
+                               :on-change #(reset! question %)]]]
+                  [re-com/h-box
+                   :gap "1em"
+                   :children [[re-com/label :label "A:"]
+                              [re-com/input-text
+                               :model answer
+                               :on-change #(reset! answer %)]]]
+                  [re-com/button
+                   :label "Create"
+                   :on-click #(let [q @question
+                                    a @answer]
+                                (re-frame/dispatch [::events/create-flashcard q a])
+                                (reset! question nil)
+                                (reset! answer nil))]]])))
+
+(defn cards-item
+  [flashcard]
+  [re-com/border
+   :border "1px solid green"
+   :radius "1em"
+   :child [re-com/v-box
+           :gap "1em"
+           :padding "8px"
+           :children [[re-com/h-box
+                       :justify :between
+                       :children [[re-com/h-box
+                                   :gap "1em"
+                                   :padding "8px"
+                                   :children [[re-com/label :label "Q:"]
+                                              [re-com/label :label (:question flashcard)]]]
+                                  [re-com/h-box
+                                   :gap "1em"
+                                   :padding "8px"
+                                   :children [[re-com/md-icon-button
+                                               :md-icon-name "zmdi-delete"
+                                               :style {:float :right}
+                                               :on-click #(re-frame/dispatch [::events/delete-flashcard (:id flashcard)])]]]]]
+                      [re-com/line]
+                      [re-com/h-box
+                       :gap "1em"
+                       :padding "8px"
+                       :children [[re-com/label :label "A:"]
+                                  [re-com/label :label (:answer flashcard)]]]]]])
+
+(defn cards-panel
+  []
+  (let [flashcards (re-frame/subscribe [::subs/flashcards])]
+    [re-com/v-box
+     :gap "1em"
+     :padding "8px"
+     :children (for [flashcard @flashcards]
+                 ^{:key (:id flashcard)}
+                 [cards-item flashcard])]))
+
+(defn deck-item
+  [deck]
+  [re-com/border
+   :border "1px solid green"
+   :radius "1em"
+   :child [re-com/v-box
+           :gap "1em"
+           :padding "8px"
+           :children [[re-com/h-box
+                       :justify :between
+                       :children [[re-com/h-box
+                                   :gap "1em"
+                                   :padding "8px"
+                                   :children [[re-com/label :label "Label:"]
+                                              [re-com/label :label (:label deck)]]]
+                                  [re-com/h-box
+                                   :gap "1em"
+                                   :padding "8px"
+                                   :children [[re-com/md-icon-button
+                                               :md-icon-name "zmdi-delete"
+                                               :style {:float :right}
+                                               :on-click #(re-frame/dispatch [::events/delete-deck (:id deck)])]]]]]
+                      [re-com/line]
+                      [re-com/label :label (:description deck)]]]])
+
+(defn decks-panel
+  []
+  (let [decks (re-frame/subscribe [::subs/decks])]
+    [re-com/v-box
+     :gap "1em"
+     :padding "8px"
+     :children (for [deck @decks]
+                 ^{:key (:id deck)}
+                 [deck-item deck])]))
+
 (defn flashcards-panel
   []
-  [re-com/v-box
-   :gap "1em"
-   :padding "8px"
-   :children [[re-com/hyperlink
-               :label "Examples"
-               :on-click #(re-frame/dispatch [::events/set-active-panel :home-panel])]
-              [fc/flashcards-panel]]])
-
-;; components
-(defn components-panel
-  []
-  [re-com/v-box
-   :gap "1em"
-   :padding "8px"
-   :children [[re-com/title
-               :label "Components"
-               :level :level1]
-              [re-com/hyperlink
-               :label "Examples"
-               :on-click #(re-frame/dispatch [::events/set-active-panel :home-panel])]
-              [comps/collapsible-panel
-               :label "collapsible-panel"
-               :child [re-com/alert-box
-                       :heading "This is just an example"
-                       :body "You can put anything you want in this thing!"]]
-              [re-com/v-box
-               :gap "1em"
-               :padding "8px"
-               :children [[re-com/label
-                           :label "paginated-panels-component"]
-                          [re-com/box
-                           :style {:border "1px dashed green"
-                                   :border-radius "1em"}
-                           :child [comps/paginated-panels-component
-                                   :children [[re-com/title
-                                               :level :level2
-                                               :label "Paginate"]
-                                              [re-com/title
-                                               :level :level2
-                                               :label "Between"]
-                                              [re-com/title
-                                               :level :level2
-                                               :label "Panels"]]]]]]]])
-
-;; home
-(defn home-panel []
-  [re-com/v-box
-   :gap "1em"
-   :padding "8px"
-   :children [[re-com/title
-               :label "Examples"
-               :level :level1]
-              [:ul
-               [:li [re-com/hyperlink
-                     :label "Flashcards"
-                     :on-click #(re-frame/dispatch [::events/set-active-panel :flashcards-panel])]]
-               [:li [re-com/hyperlink
-                     :label "Components"
-                     :on-click #(re-frame/dispatch [::events/set-active-panel :comps-panel])]]]]])
+  (re-frame/dispatch [::events/fetch-flashcards])
+  (re-frame/dispatch [::events/fetch-decks])
+  (let [quiz? (r/atom false)]
+    (fn []
+      [re-com/v-box
+       :gap "1em"
+       :padding "8px"
+       :children [[re-com/title
+                   :label "Flashcards"
+                   :level :level1]
+                  [comps/collapsible-panel
+                   :label "Quiz"
+                   :gap "1em"
+                   :padding "8px"
+                   :on-click #(swap! quiz? not)
+                   :child [quiz-panel]]
+                  [comps/collapsible-panel
+                   :label "New"
+                   :gap "1em"
+                   :padding "8px"
+                   :disabled? @quiz?
+                   :child [new-panel]]
+                  [comps/collapsible-panel
+                   :label "Cards"
+                   :gap "1em"
+                   :padding "8px"
+                   :disabled? @quiz?
+                   :child [cards-panel]]
+                  [comps/collapsible-panel
+                   :label "Decks"
+                   :gap "1em"
+                   :padding "8px"
+                   :disabled? @quiz?
+                   :child [decks-panel]]]])))
 
 ;; main
 
-#_(defn- panels [panel-name]
-  (case panel-name
-    :home-panel [home-panel]
-    :comps-panel [components-panel]
-    :flashcards-panel [flashcards-panel]
-    [:div "Something went horribly wrong..."]))
-
 (defn main-panel []
-  (let [active-panel (re-frame/subscribe [::subs/active-panel])]
-    [re-com/v-box
-     :height "100%"
-     :padding "8px"
-     :children [(case @active-panel
-                  :home-panel [home-panel]
-                  :comps-panel [components-panel]
-                  :flashcards-panel [flashcards-panel]
-                  [:div "Something went horribly wrong..."])
-                #_[panels @active-panel]]]))
+  [re-com/v-box
+   :height "100%"
+   :padding "8px"
+   :children [[flashcards-panel]]])

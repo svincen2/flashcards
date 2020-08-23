@@ -46,7 +46,11 @@
    :api/flashcards {:get (fn [_] (api/get-flashcards))
                     :post api/create-flashcard
                     :delete api/delete-flashcard
-                    :options (partial api/access-control :flashcards)}})
+                    :options (partial api/access-control :flashcards)}
+   :api/decks {:get (fn [_] (api/get-decks))
+               :post api/create-deck
+               :delete api/delete-deck
+               :options (partial api/access-control :decks)}})
 
 (def ^:private ring-handler
   (fn [{:keys [uri request-method] :as req}]

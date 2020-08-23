@@ -11,3 +11,13 @@
  ::active-panel
  (fn [db _]
    (:active-panel db)))
+
+(re-frame/reg-sub
+ ::flashcards
+ (fn [db _]
+   (:flashcards db)))
+
+(re-frame/reg-sub
+ ::decks
+ (fn [db _]
+   (:decks db)))
