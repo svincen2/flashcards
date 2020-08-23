@@ -8,7 +8,7 @@
    [components :as comps]
    [taoensso.timbre :as log]))
 
-(defn create-flashcard-component
+(defn new-panel
   []
   (let [question (r/atom nil)
         answer (r/atom nil)]
@@ -38,7 +38,6 @@
 
 (defn quiz-panel
   []
-  (re-frame/dispatch [::events/fetch-flashcards])
   (let [quiz-cards (shuffle @(re-frame/subscribe [::subs/flashcards]))
         revealed? (r/atom false)]
     (fn []
@@ -60,7 +59,7 @@
                                       :attr {:on-click #(reset! revealed? true)}]]])
                        quiz-cards)])))
 
-(defn flashcard-list-item
+(defn list-item
   [flashcard]
   [re-com/border
    :border "1px solid green"
@@ -89,19 +88,19 @@
                        :children [[re-com/label :label "A:"]
                                   [re-com/label :label (:answer flashcard)]]]]]])
 
-(defn flashcards-list-component
+(defn list-panel
   []
-  (re-frame/dispatch [::events/fetch-flashcards])
   (let [flashcards (re-frame/subscribe [::subs/flashcards])]
     [re-com/v-box
      :gap "1em"
      :padding "8px"
      :children (for [flashcard @flashcards]
                  ^{:key (:id flashcard)}
-                 [flashcard-list-item flashcard])]))
+                 [list-item flashcard])]))
 
 (defn flashcards-panel
   []
+  (re-frame/dispatch [::events/fetch-flashcards])
   (let [quiz? (r/atom false)]
     (fn []
       [re-com/v-box
@@ -121,10 +120,10 @@
                    :gap "1em"
                    :padding "8px"
                    :disabled? @quiz?
-                   :child [create-flashcard-component]]
+                   :child [new-panel]]
                   [comps/collapsible-panel
                    :label "Cards"
                    :gap "1em"
                    :padding "8px"
                    :disabled? @quiz?
-                   :child [flashcards-list-component]]]])))
+                   :child [list-panel]]]])))
