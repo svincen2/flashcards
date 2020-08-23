@@ -15,7 +15,8 @@
 
                  ;; My stuff
                  [aero "1.1.6"]
-                 [com.taoensso/timbre "4.10.0"]
+                 #_[com.taoensso/timbre "4.10.0"]
+                 [org.clojars.sean-vincent/clj-util "0.2.2"]
                  [bidi "2.1.6"]
                  [org.clojure/java.jdbc "0.7.11"]
                  [honeysql "1.0.444"]
