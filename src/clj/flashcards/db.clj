@@ -3,10 +3,16 @@
             [honeysql.core :as sql]
             [clojure.string :as str]
             [taoensso.timbre :as log])
-  (:import [java.time Instant]))
+  (:import [java.sql Timestamp]
+           [java.time Instant]
+           [java.util Date UUID]))
 
-(def spec {:dbtype "sqlite"
-           :dbname "db.sqlite"})
+#_(def spec {:dbtype "sqlite"
+             :dbname "db.sqlite"})
+
+(def spec {:dbtype "postgresql"
+           :dbname "flashcards"
+           :host "localhost"})
 
 (defn ^:private clj->sql
   [x]
@@ -21,43 +27,53 @@
       (str/replace #"_" "-")
       (keyword)))
 
-(defn ^:private parse-instants
+(defn ^:private convert-instants
   [row]
-  (let [instant-cols [:created-at :updated-at]]
-    (reduce (fn [row col]
-              (update row col #(Instant/parse %)))
-            row
-            instant-cols)))
+  (into {} (map (fn [[k v]]
+                  {k (if (instance? Date v)
+                       (.toInstant v)
+                       v)})
+                row)))
+
+(defn ^:private prepare-insert
+  [row]
+  (let [created-at (Timestamp/from (Instant/now))]
+    (merge {:id (UUID/randomUUID)
+            :created-at created-at
+            :updated-at created-at}
+           (into {} (map (fn [[k v]]
+                           {k (if (instance? Instant v)
+                                (Timestamp/from v)
+                                v)})
+                         row)))))
 
 (defn query
   [sqlmap]
   (let [sql (sql/format sqlmap)]
     (log/info "query" sql)
     (->> (jdbc/query spec sql
-                 {:identifiers sql->clj
-                  :entities clj->sql})
-         #_(map parse-instants))))
+                     {:identifiers sql->clj
+                      :entities clj->sql})
+         (map convert-instants))))
 
 (defn fetch!
   [table id]
   (log/info "fetch!" table id)
-  (first (query {:select [:*]
-                 :from [table]
-                 :where [:= :id id]})))
+  (-> (query {:select [:*]
+              :from [table]
+              :where [:= :id id]})
+      (first)
+      (convert-instants)))
 
 (defn insert!
   [table row]
   (log/info "insert!" table row)
-  (let [created-at (or (:created-at row) (Instant/now))
-        row (merge row {:created-at created-at
-                        :updated-at created-at})
-        id (-> (jdbc/insert! spec table
-                             row
-                             {:identifiers sql->clj
-                              :entities clj->sql})
-               (first)
-               (get (keyword "last-insert-rowid()")))]
-    (fetch! table id)))
+  (-> (jdbc/insert! spec table
+                    (prepare-insert row)
+                    {:identifiers sql->clj
+                     :entities clj->sql})
+      (first)
+      (convert-instants)))
 
 (defn delete!
   [table where]
@@ -65,16 +81,15 @@
   (let [sql (sql/format {:delete-from table
                          :where where})]
     (jdbc/execute! spec sql
-                  {:identifiers sql->clj
-                   :entities clj->sql})))
-
+                   {:identifiers sql->clj
+                    :entities clj->sql})))
 
 (comment
 
   (query {:select [:*] :from [:flashcards]})
 
+  (delete! :flashcards [:= :question "Hello?"])
+
   (insert! :flashcards {:question "Hello?"
                         :answer "Goodbye"
-                        :created-at (Instant/now)})
-
-  )
+                        :created-at (Instant/now)}))
