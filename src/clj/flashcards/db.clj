@@ -5,10 +5,7 @@
             [taoensso.timbre :as log])
   (:import [java.sql Timestamp]
            [java.time Instant]
-           [java.util Date UUID]))
-
-#_(def spec {:dbtype "sqlite"
-             :dbname "db.sqlite"})
+           [java.util UUID]))
 
 (def spec {:dbtype "postgresql"
            :dbname "flashcards"
@@ -26,14 +23,6 @@
       (str/lower-case)
       (str/replace #"_" "-")
       (keyword)))
-
-(defn ^:private convert-instants
-  [row]
-  (into {} (map (fn [[k v]]
-                  {k (if (instance? Date v)
-                       (.toInstant v)
-                       v)})
-                row)))
 
 (defn ^:private prepare-insert
   [row]
@@ -53,8 +42,7 @@
     (log/info "query" sql)
     (->> (jdbc/query spec sql
                      {:identifiers sql->clj
-                      :entities clj->sql})
-         (map convert-instants))))
+                      :entities clj->sql}))))
 
 (defn fetch!
   [table id]
@@ -62,8 +50,7 @@
   (-> (query {:select [:*]
               :from [table]
               :where [:= :id id]})
-      (first)
-      (convert-instants)))
+      (first)))
 
 (defn insert!
   [table row]
@@ -72,8 +59,7 @@
                     (prepare-insert row)
                     {:identifiers sql->clj
                      :entities clj->sql})
-      (first)
-      (convert-instants)))
+      (first)))
 
 (defn delete!
   [table where]
