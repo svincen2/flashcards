@@ -3,4 +3,4 @@
 (def default-db
   {:name "flashcards"
    :active-panel :home-panel
-   :flashcards []})
+   :flashcards {:flashcards []}})

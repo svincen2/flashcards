@@ -5,6 +5,7 @@
    [re-com.core :as re-com]
    [flashcards.events.flashcards :as events]
    [flashcards.subs.flashcards :as subs]
+   [components :as comps]
    [taoensso.timbre :as log]))
 
 (defn create-flashcard-component
@@ -35,10 +36,34 @@
                                 (reset! question nil)
                                 (reset! answer nil))]]])))
 
+(defn quiz-panel
+  []
+  (re-frame/dispatch [::events/fetch-flashcards])
+  (let [quiz-cards (shuffle @(re-frame/subscribe [::subs/flashcards]))
+        revealed? (r/atom false)]
+    (fn []
+      [comps/paginated-panels-component
+       :on-click #(reset! revealed? false)
+       :children (mapv (fn [card]
+                         [re-com/v-box
+                          :gap "1em"
+                          :padding "8px"
+                          :align :center
+                          :children [[re-com/title
+                                      :level :level2
+                                      :label (:question card)]
+                                     [re-com/title
+                                      :level :level3
+                                      :style {:color "gray"
+                                              :cursor (if @revealed? "default" "pointer")}
+                                      :label (if @revealed? (:answer card) "Check answer")
+                                      :attr {:on-click #(reset! revealed? true)}]]])
+                       quiz-cards)])))
+
 (defn flashcard-list-item
   [flashcard]
   [re-com/border
-   :border "1px dashed green"
+   :border "1px solid green"
    :radius "1em"
    :child [re-com/v-box
            :gap "1em"
@@ -74,3 +99,32 @@
      :children (for [flashcard @flashcards]
                  ^{:key (:id flashcard)}
                  [flashcard-list-item flashcard])]))
+
+(defn flashcards-panel
+  []
+  (let [quiz? (r/atom false)]
+    (fn []
+      [re-com/v-box
+       :gap "1em"
+       :padding "8px"
+       :children [[re-com/title
+                   :label "Flashcards"
+                   :level :level1]
+                  [comps/collapsible-panel
+                   :label "Quiz"
+                   :gap "1em"
+                   :padding "8px"
+                   :on-click #(swap! quiz? not)
+                   :child [quiz-panel]]
+                  [comps/collapsible-panel
+                   :label "New"
+                   :gap "1em"
+                   :padding "8px"
+                   :disabled? @quiz?
+                   :child [create-flashcard-component]]
+                  [comps/collapsible-panel
+                   :label "Cards"
+                   :gap "1em"
+                   :padding "8px"
+                   :disabled? @quiz?
+                   :child [flashcards-list-component]]]])))

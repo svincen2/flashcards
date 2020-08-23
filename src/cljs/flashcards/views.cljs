@@ -15,18 +15,10 @@
   [re-com/v-box
    :gap "1em"
    :padding "8px"
-   :children [[re-com/title
-               :label "Flashcards"
-               :level :level1]
-              [re-com/hyperlink
+   :children [[re-com/hyperlink
                :label "Examples"
                :on-click #(re-frame/dispatch [::events/set-active-panel :home-panel])]
-              [comps/collapsible-panel
-               :label "New"
-               :gap "1em"
-               :padding "8px"
-               :child [fc/create-flashcard-component]]
-              [fc/flashcards-list-component]]])
+              [fc/flashcards-panel]]])
 
 ;; components
 (defn components-panel
@@ -41,10 +33,28 @@
                :label "Examples"
                :on-click #(re-frame/dispatch [::events/set-active-panel :home-panel])]
               [comps/collapsible-panel
-               :label "Collapsible Panel"
+               :label "collapsible-panel"
                :child [re-com/alert-box
                        :heading "This is just an example"
-                       :body "You can put anything you want in this thing!"]]]])
+                       :body "You can put anything you want in this thing!"]]
+              [re-com/v-box
+               :gap "1em"
+               :padding "8px"
+               :children [[re-com/label
+                           :label "paginated-panels-component"]
+                          [re-com/box
+                           :style {:border "1px dashed green"
+                                   :border-radius "1em"}
+                           :child [comps/paginated-panels-component
+                                   :children [[re-com/title
+                                               :level :level2
+                                               :label "Paginate"]
+                                              [re-com/title
+                                               :level :level2
+                                               :label "Between"]
+                                              [re-com/title
+                                               :level :level2
+                                               :label "Panels"]]]]]]]])
 
 ;; home
 (defn home-panel []

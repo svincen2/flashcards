@@ -1,7 +1,8 @@
 (ns flashcards.subs.flashcards
-  (:require [re-frame.core :as re-frame]))
+  (:require [re-frame.core :as re-frame]
+            [taoensso.timbre :as log]))
 
 (re-frame/reg-sub
  ::flashcards
  (fn [db _]
-   (:flashcards db)))
+   (get-in db [:flashcards :flashcards])))

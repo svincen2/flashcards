@@ -1,5 +1,6 @@
 (ns flashcards.events.flashcards
-  (:require-macros [cljs.core.async.macros :as am])
+  (:require-macros [cljs.core.async.macros :as am]
+                   [taoensso.timbre :as log])
   (:require
    [re-frame.core :as re-frame]
    [cljs-http.client :as http]
@@ -15,7 +16,7 @@
 (re-frame/reg-event-db
  ::fetch-flashcards-success
  (fn [db [_ body]]
-   (assoc db :flashcards (vec body))))
+   (assoc-in db [:flashcards :flashcards] (vec body))))
 
 (re-frame/reg-event-fx
  ::create-flashcard
