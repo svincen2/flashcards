@@ -1,0 +1,53 @@
+* Decks
+** Way to group cards
+Sort of like a tag
+Any arbitrary text can name a deck
+Each group name must be unique
+** UI
+*** Card UI
+**** Browse or auto-create
+On card edit/create, group assign by browsing
+If not found, auto-creates a new group
+Group can be editing later
+Color will be auto-assigned
+*** Groups UI
+**** Browse groups
+**** Edit group
+***** Name
+***** Color
+* Quizzes
+Quiz in different ways
+** By deck
+Quiz a single deck, randomly shuffled (✓)
+** Multiple decks
+Like quiz by deck, but with multiple decks
+Randomly shuffles the entire mixed deck
+*** Deck balancing
+Each included deck can be scaled from 1 card, to all cards
+* Stats
+** Gathering stats
+*** Views
+Record each time the card is viewed
+*** Time and correctness
+Start timing when card is shown
+Stop when "Check answer" is clicked
+User then must record correctness
+*** UI for correctness
+Sime icon button pair, check (✓) and cross (x), or plus (+) and minus (-)
+Available only after answer is checked
+** Viewing stats
+*** Stats can be viewed by card, deck, or quiz
+*** Common stats
+**** Accuracy
+Total correct / Total views
+*** Card stats
+**** Average time
+Average time to answer the card
+*** Deck stats
+**** Average time
+Average time to complete the entire deck
+**** Average time per card
+*** Quiz stats
+**** Average time
+Average time to complete the entire quiz
+**** Average time per card
