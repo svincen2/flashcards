@@ -2,5 +2,5 @@
 
 (def default-db
   {:name "flashcards"
-   :active-panel :home-panel
-   :flashcards {:flashcards []}})
+   :active-tab :cards
+   :flashcards []})

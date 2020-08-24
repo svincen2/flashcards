@@ -8,11 +8,6 @@
    (:name db)))
 
 (re-frame/reg-sub
- ::active-panel
- (fn [db _]
-   (:active-panel db)))
-
-(re-frame/reg-sub
  ::flashcards
  (fn [db _]
    (:flashcards db)))
@@ -21,3 +16,8 @@
  ::decks
  (fn [db _]
    (:decks db)))
+
+(re-frame/reg-sub
+ ::active-tab
+ (fn [db _]
+   (:active-tab db)))

@@ -12,9 +12,9 @@
    db/default-db))
 
 (re-frame/reg-event-db
- ::set-active-panel
- (fn [db [_ active-panel]]
-   (assoc db :active-panel active-panel)))
+ ::set-active-tab
+ (fn [db [_ active-tab]]
+   (assoc db :active-tab active-tab)))
 
 (def api-url "http://localhost:3000/api/")
 
