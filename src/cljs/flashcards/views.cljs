@@ -6,8 +6,10 @@
    [components :as comps]
    [flashcards.events :as events]
    [flashcards.subs :as subs]
-   [taoensso.timbre :as log]
-   ))
+   [taoensso.timbre :as log]))
+
+;; Quizzes
+
 
 (defn quiz-panel
   []
@@ -32,26 +34,45 @@
                                       :attr {:on-click #(reset! revealed? true)}]]])
                        quiz-cards)])))
 
+;; Cards
+
 (defn new-panel
   []
   (let [question (r/atom nil)
-        answer (r/atom nil)]
+        answer (r/atom nil)
+        deck (r/atom :default)
+        decks (re-frame/subscribe [::subs/decks])]
     (fn []
       [re-com/v-box
        :gap "1em"
        :padding "8px"
        :children [[re-com/h-box
                    :gap "1em"
-                   :children [[re-com/label :label "Q:"]
-                              [re-com/input-text
-                               :model question
-                               :on-change #(reset! question %)]]]
-                  [re-com/h-box
-                   :gap "1em"
-                   :children [[re-com/label :label "A:"]
-                              [re-com/input-text
-                               :model answer
-                               :on-change #(reset! answer %)]]]
+                   :justify :between
+                   :children [[re-com/v-box
+                               :gap "1em"
+                               :children [[re-com/label :label "Question"]
+                                          [re-com/input-textarea
+                                           :model question
+                                           :on-change #(reset! question %)]
+                                          [re-com/label :label "Answer"]
+                                          [re-com/input-textarea
+                                           :model answer
+                                           :on-change #(reset! answer %)]]]
+                              [re-com/v-box
+                               :gap "1em"
+                               :align :end
+                               :justify :start
+                               :width "250px"
+                               :children [[re-com/label :label "Add to deck"]
+                                          [re-com/single-dropdown
+                                           :choices (into [{:id :default :label "Default"}]
+                                                          (map (fn [{:keys [id label]}]
+                                                                 {:id id :label label})
+                                                               @decks))
+                                           :model deck
+                                           :on-change #(reset! deck %)
+                                           :width "100%"]]]]]
                   [re-com/button
                    :label "Create"
                    :on-click #(let [q @question
@@ -95,9 +116,16 @@
     [re-com/v-box
      :gap "1em"
      :padding "8px"
-     :children (for [flashcard @flashcards]
-                 ^{:key (:id flashcard)}
-                 [cards-item flashcard])]))
+     :children (into
+                [[comps/collapsible-panel
+                  :label "New"
+                  :gap "1em"
+                  :child [new-panel]]]
+                (for [flashcard @flashcards]
+                  ^{:key (:id flashcard)}
+                  [cards-item flashcard]))]))
+
+;; Decks
 
 (defn deck-item
   [deck]
@@ -109,11 +137,9 @@
            :padding "8px"
            :children [[re-com/h-box
                        :justify :between
-                       :children [[re-com/h-box
-                                   :gap "1em"
+                       :children [[re-com/box
                                    :padding "8px"
-                                   :children [[re-com/label :label "Label:"]
-                                              [re-com/label :label (:label deck)]]]
+                                   :child [re-com/label :label (:label deck)]]
                                   [re-com/h-box
                                    :gap "1em"
                                    :padding "8px"
@@ -122,7 +148,9 @@
                                                :style {:float :right}
                                                :on-click #(re-frame/dispatch [::events/delete-deck (:id deck)])]]]]]
                       [re-com/line]
-                      [re-com/label :label (:description deck)]]]])
+                      [re-com/box
+                       :padding "8px"
+                       :child [re-com/label :label (:description deck)]]]]])
 
 (defn decks-panel
   []
@@ -143,21 +171,18 @@
       [re-com/v-box
        :gap "1em"
        :padding "8px"
-       :children [[re-com/title
-                   :label "Flashcards"
-                   :level :level1]
+       :width "650px"
+       :children [[re-com/box
+                   :align :center
+                   :child [re-com/title
+                           :label "Flashcards"
+                           :level :level1]]
                   [comps/collapsible-panel
                    :label "Quiz"
                    :gap "1em"
                    :padding "8px"
                    :on-click #(swap! quiz? not)
                    :child [quiz-panel]]
-                  [comps/collapsible-panel
-                   :label "New"
-                   :gap "1em"
-                   :padding "8px"
-                   :disabled? @quiz?
-                   :child [new-panel]]
                   [comps/collapsible-panel
                    :label "Cards"
                    :gap "1em"
@@ -177,4 +202,5 @@
   [re-com/v-box
    :height "100%"
    :padding "8px"
+   :align :center
    :children [[flashcards-panel]]])
