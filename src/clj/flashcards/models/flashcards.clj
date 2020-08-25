@@ -7,7 +7,8 @@
                        :created-at
                        :updated-at
                        :question
-                       :answer]})
+                       :answer
+                       :deck-id]})
 
 (defn fetch
   []
@@ -16,10 +17,11 @@
              :order-by [[:created-at :desc]]}))
 
 (defn create!
-  [question answer]
+  [question answer deck-id]
   (db/insert! (:table schema)
               {:question question
-               :answer answer}))
+               :answer answer
+               :deck-id deck-id}))
 
 (defn delete!
   [id]

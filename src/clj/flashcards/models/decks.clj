@@ -6,8 +6,7 @@
              :columns [:id
                        :created-at
                        :updated-at
-                       :label
-                       :description]})
+                       :label]})
 
 (defn fetch
   []
@@ -16,10 +15,9 @@
              :order-by [[:created-at :desc]]}))
 
 (defn create!
-  [label description]
+  [label]
   (db/insert! (:table schema)
-              {:label label
-               :description description}))
+              {:label label}))
 
 (defn delete-by-id!
   [id]
@@ -35,7 +33,7 @@
 
   (fetch)
 
-  (create! "AP Bio" "AP Bio Fall 2020")
+  (create! "AP Bio")
 
   (delete-by-label! "AP Bio")
   (delete-by-id! #uuid "9ecae69b-a2f7-4df7-b1f5-cf2c487a81f3")

@@ -32,8 +32,8 @@
 
 (re-frame/reg-event-fx
  ::create-flashcard
- (fn [_ [_ question answer]]
-   (let [req {:edn-params {:question question :answer answer}
+ (fn [_ [_ question answer deck-id]]
+   (let [req {:edn-params {:question question :answer answer :deck-id deck-id}
               :with-credentials? false}]
      (am/go
        (let [{:keys [status] :as res} (a/<! (http/post (str api-url "flashcards") req))]
@@ -77,8 +77,8 @@
 
 (re-frame/reg-event-fx
  ::create-deck
- (fn [_ [_ label description]]
-   (let [req {:edn-params {:label label :description description}
+ (fn [_ [_ label]]
+   (let [req {:edn-params {:label label}
               :with-credentials? false}]
      (am/go
        (let [{:keys [status] :as res} (a/<! (http/post (str api-url "decks") req))]

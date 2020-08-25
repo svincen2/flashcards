@@ -9,29 +9,26 @@
     (fn [& opts]
       (let [{:keys [label child padding on-click disabled?]} opts
             cursor (if disabled? "not-allowed" "pointer")]
-        [re-com/box
+        [re-com/v-box
          :padding padding
-         :child [re-com/v-box
-                 :padding "8px"
-                 :style {:border "1px dashed green"
-                         :border-radius "0.5em"}
-                 :children [[re-com/h-box
-                             :gap "0.5em"
-                             :padding "8px"
-                             :style {:cursor cursor}
-                             :attr {:on-click #(do (when on-click (on-click))
-                                                   (swap! collapsed? not))}
-                             :children [[re-com/label
-                                         :label label
-                                         :style {:color (if disabled? "lightgray" "gray")}]
-                                        [re-com/md-icon-button
-                                         :md-icon-name (if (or @collapsed? disabled?)
-                                                         "zmdi-chevron-down"
-                                                         "zmdi-chevron-up")
-                                         :style {:cursor cursor}
-                                         :disabled? disabled?]]]
-                            (when-not (or @collapsed? disabled?)
-                              child)]]]))))
+         :style {:border-bottom "1px solid lightgray"}
+         :children [[re-com/h-box
+                     :gap "0.5em"
+                     :padding "8px"
+                     :style {:cursor cursor}
+                     :attr {:on-click #(do (when on-click (on-click))
+                                           (swap! collapsed? not))}
+                     :children [[re-com/label
+                                 :label label
+                                 :style {:color (if disabled? "lightgray" "gray")}]
+                                [re-com/md-icon-button
+                                 :md-icon-name (if (or @collapsed? disabled?)
+                                                 "zmdi-chevron-down"
+                                                 "zmdi-chevron-up")
+                                 :style {:cursor cursor}
+                                 :disabled? disabled?]]]
+                    (when-not (or @collapsed? disabled?)
+                      child)]]))))
 
 (defn paginated-panels-component
   [& opts]

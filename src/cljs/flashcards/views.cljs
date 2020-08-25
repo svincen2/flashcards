@@ -23,8 +23,8 @@
                           :gap "1em"
                           :height "250px"
                           :width "100%"
-                          :style {:border "1px solid green"
-                                  :border-radius "0.5em"}
+                          :style {:border-bottom "1px solid lightgray"
+                                  :padding-bottom "1em"}
                           :justify :between
                           :children [[re-com/box
                                       :width "100%"
@@ -39,17 +39,16 @@
                                       :padding "8px"
                                       :align :center
                                       :child [re-com/title
-                                              :level :level3
+                                              :level :level2
                                               :style {:color "gray"
-                                                      :cursor (if @revealed? "default" "pointer")
-                                                      }
+                                                      :cursor (if @revealed? "default" "pointer")}
                                               :label (if @revealed? (:answer card) "Check answer")
                                               :attr {:on-click #(reset! revealed? true)}]]]])
                        quiz-cards)])))
 
 ;; Cards
 
-(defn new-panel
+(defn new-card-panel
   []
   (let [question (r/atom nil)
         answer (r/atom nil)
@@ -58,6 +57,7 @@
     (fn []
       [re-com/v-box
        :gap "1em"
+       :padding "8px"
        :children [[re-com/h-box
                    :gap "1em"
                    :justify :between
@@ -88,89 +88,130 @@
                   [re-com/button
                    :label "Create"
                    :on-click #(let [q @question
-                                    a @answer]
-                                (re-frame/dispatch [::events/create-flashcard q a])
+                                    a @answer
+                                    d (let [d  @deck] (if (= :default d) nil d))]
+                                (re-frame/dispatch [::events/create-flashcard q a d])
                                 (reset! question nil)
-                                (reset! answer nil))]]])))
+                                (reset! answer nil)
+                                (reset! deck :default))]]])))
 
 (defn cards-item
-  [flashcard]
+  [{:keys [id question answer deck-id]} decks]
   [re-com/v-box
-   :gap "1em"
    :padding "8px"
-   :style {:border "1px solid green"
-           :border-radius "0.5em"}
+   :style {:border-left "1px solid lightgray"
+           :border-bottom "1px solid lightgray"
+           :border-right "1px solid lightgray"}
    :children [[re-com/h-box
+               :style {:border-bottom "1px dashed lightgray"}
                :justify :between
                :children [[re-com/h-box
                            :gap "1em"
                            :padding "8px"
+                           :width "400px"
                            :children [[re-com/label :label "Q:"]
-                                      [re-com/label :label (:question flashcard)]]]
+                                      [:p
+                                       {:style {:margin-bottom "0px"}}
+                                       question]]]
                           [re-com/h-box
-                           :gap "1em"
                            :padding "8px"
-                           :children [[re-com/md-icon-button
+                           :gap "1em"
+                           :children [(when deck-id
+                                        [re-com/box
+                                         :child [re-com/label
+                                                 :label (get-in decks [deck-id :label])]])
+                                      [re-com/md-icon-button
                                        :md-icon-name "zmdi-delete"
                                        :style {:float :right}
-                                       :on-click #(re-frame/dispatch [::events/delete-flashcard (:id flashcard)])]]]]]
-              [re-com/line]
+                                       :on-click #(re-frame/dispatch
+                                                   [::events/delete-flashcard id])]]]]]
               [re-com/h-box
                :gap "1em"
                :padding "8px"
+               :width "400px"
                :children [[re-com/label :label "A:"]
-                          [re-com/label :label (:answer flashcard)]]]]])
+                          [:p
+                           {:style {:margin-bottom "0px"}}
+                           answer]]]]])
 
 (defn cards-panel
   []
-  (let [flashcards (re-frame/subscribe [::subs/flashcards])]
+  (let [flashcards (re-frame/subscribe [::subs/flashcards])
+        decks (re-frame/subscribe [::subs/decks])]
     [re-com/v-box
-     :gap "1em"
      :width "100%"
-     :children (into
-                [[comps/collapsible-panel
-                  :label "New"
-                  :gap "1em"
-                  :child [new-panel]]]
-                (for [flashcard @flashcards]
-                  ^{:key (:id flashcard)}
-                  [cards-item flashcard]))]))
+     :children [[comps/collapsible-panel
+                 :label "New"
+                 :gap "1em"
+                 :padding "8px"
+                 :child [new-card-panel]]
+                [re-com/scroller
+                 :v-scroll :auto
+                 :height "450px"
+                 :child [re-com/v-box
+                         :children (for [flashcard @flashcards]
+                                     ^{:key (:id flashcard)}
+                                     [cards-item flashcard (into {} (map (fn [d] {(:id d) d}) @decks))])]]]]))
 
 ;; Decks
 
+(defn new-deck-panel
+  []
+  (let [label (r/atom nil)]
+    (fn []
+      [re-com/v-box
+       :gap "1em"
+       :padding "8px"
+       :children [[re-com/v-box
+                   :gap "1em"
+                   :children [[re-com/label :label "Label"]
+                              [re-com/input-text
+                               :model label
+                               :on-change #(reset! label %)]]]
+                  [re-com/button
+                   :label "Create"
+                   :on-click #(do
+                                (re-frame/dispatch [::events/create-deck @label])
+                                (reset! label nil))]]])))
+
 (defn deck-item
   [deck]
-  [re-com/v-box
-   :gap "1em"
+  [re-com/h-box
    :padding "8px"
-   :style {:border "1px solid green"
-           :border-radius "0.5em"}
-   :children [[re-com/h-box
-               :justify :between
-               :children [[re-com/box
-                           :padding "8px"
-                           :child [re-com/label :label (:label deck)]]
-                          [re-com/h-box
-                           :gap "1em"
-                           :padding "8px"
-                           :children [[re-com/md-icon-button
-                                       :md-icon-name "zmdi-delete"
-                                       :style {:float :right}
-                                       :on-click #(re-frame/dispatch [::events/delete-deck (:id deck)])]]]]]
-              [re-com/line]
-              [re-com/box
+   :style {:border-left "1px solid lightgray"
+           :border-bottom "1px solid lightgray"
+           :border-right "1px solid lightgray"}
+   :justify :between
+   :children [[re-com/box
                :padding "8px"
-               :child [re-com/label :label (:description deck)]]]])
+               :child [re-com/label :label (:label deck)]]
+              [re-com/h-box
+               :gap "1em"
+               :padding "8px"
+               :children [[re-com/md-icon-button
+                           :md-icon-name "zmdi-delete"
+                           :style {:float :right}
+                           :on-click #(re-frame/dispatch
+                                       [::events/delete-deck (:id deck)])]]]]])
 
 (defn decks-panel
   []
   (let [decks (re-frame/subscribe [::subs/decks])]
     [re-com/v-box
-     :gap "1em"
      :width "100%"
-     :children (for [deck @decks]
-                 ^{:key (:id deck)}
-                 [deck-item deck])]))
+     :children (into
+                [[comps/collapsible-panel
+                  :label "New"
+                  :gap "1em"
+                  :padding "8px"
+                  :child [new-deck-panel]]
+                 [re-com/scroller
+                  :v-scroll :auto
+                  :height "450px"
+                  :child [re-com/v-box
+                          :children (for [deck @decks]
+                                      ^{:key (:id deck)}
+                                      [deck-item deck])]]])]))
 
 ;; main
 

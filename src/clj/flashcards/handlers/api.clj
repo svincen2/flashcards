@@ -29,8 +29,8 @@
   (-> (r/ok (f/fetch))))
 
 (defn create-flashcard
-  [{{:keys [question answer]} :edn-body}]
-  (r/ok (f/create! question answer)))
+  [{{:keys [question answer deck-id]} :edn-body}]
+  (r/ok (f/create! question answer deck-id)))
 
 (defn delete-flashcard
   [{{:keys [id]} :edn-body}]
@@ -41,8 +41,8 @@
   (-> (r/ok (d/fetch))))
 
 (defn create-deck
-  [{{:keys [label description]} :edn-body}]
-  (r/ok (d/create! label description)))
+  [{{:keys [label]} :edn-body}]
+  (r/ok (d/create! label)))
 
 (defn delete-deck
   [{{:keys [id]} :edn-body}]
