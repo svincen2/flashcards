@@ -1,7 +1,9 @@
 (ns components
   (:require [reagent.core :as r]
             [re-com.core :as re-com]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [clojure.string :as str]
+            [utils :as utils]))
 
 (defn collapsible-panel
   [& _]
@@ -57,3 +59,49 @@
                                              (when (< @next-child max-child)
                                                (swap! next-child inc))
                                              (when on-click (on-click)))]]]]]))))
+
+(defn color-picker-slider
+  [& opts]
+  (let [{:keys [model on-change]} opts]
+    [re-com/slider
+     :model model
+     :width "250px"
+     :on-change #(do
+                   (reset! model %)
+                   (when on-change
+                     (on-change)))
+     :min 0
+     :max 256
+     :step 1]))
+
+(defn color-picker
+  [model]
+  (let [[r g b] (utils/hex-color->rgb-bytes @model)
+        red (r/atom r)
+        green (r/atom g)
+        blue (r/atom b)
+        on-change #(reset! model (utils/rgb->hex @red @green @blue))]
+    (fn [_]
+      [re-com/v-box
+       :gap "1em"
+       :align :end
+       :children [[re-com/box
+                   :height "32px"
+                   :width "64px"
+                   :child [:div {:style {:background-color (str "#" (utils/rgb->hex @red @green @blue))
+                                         :display :block
+                                         :width "100%"
+                                         :height "100%"
+                                         :border "1px solid lightgray"
+                                         :border-radius "0.5em"}}]]
+                  [re-com/v-box
+                   :gap "1em"
+                   :children [[color-picker-slider
+                               :model red
+                               :on-change on-change]
+                              [color-picker-slider
+                               :model green
+                               :on-change on-change]
+                              [color-picker-slider
+                               :model blue
+                               :on-change on-change]]]]])))

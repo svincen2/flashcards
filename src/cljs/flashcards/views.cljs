@@ -118,17 +118,24 @@
                            :gap "1em"
                            :children [(when deck-id
                                         [re-com/box
+                                         :padding "4px"
+                                         :style {:background-color (str "#" (get-in decks [deck-id :color]))
+                                                 :border "1px solid lightgray"
+                                                 :border-radius "0.5em"}
                                          :child [re-com/label
                                                  :label (get-in decks [deck-id :label])]])
-                                      [re-com/md-icon-button
-                                       :md-icon-name "zmdi-delete"
-                                       :style {:float :right}
-                                       :on-click #(re-frame/dispatch
-                                                   [::events/delete-flashcard id])]]]]]
+                                      [re-com/box
+                                       :padding "4px"
+                                       :child [re-com/md-icon-button
+                                        :md-icon-name "zmdi-delete"
+                                        :style {:float :right}
+                                        :on-click #(re-frame/dispatch
+                                                    [::events/delete-flashcard id])]]]]]]
               [re-com/h-box
                :gap "1em"
                :padding "8px"
                :width "400px"
+               :style {:margin-top "8px"}
                :children [[re-com/label :label "A:"]
                           [:p
                            {:style {:margin-bottom "0px"}}
@@ -157,21 +164,29 @@
 
 (defn new-deck-panel
   []
-  (let [label (r/atom nil)]
+  (let [label (r/atom nil)
+        color (r/atom "ffffff")]
     (fn []
       [re-com/v-box
        :gap "1em"
        :padding "8px"
-       :children [[re-com/v-box
-                   :gap "1em"
-                   :children [[re-com/label :label "Label"]
-                              [re-com/input-text
-                               :model label
-                               :on-change #(reset! label %)]]]
+       :children [[re-com/h-box
+                   :justify :between
+                   :children [[re-com/v-box
+                               :gap "1em"
+                               :children [[re-com/label :label "Label"]
+                                          [re-com/input-text
+                                           :model label
+                                           :on-change #(reset! label %)]]]
+                              [re-com/v-box
+                               :gap "1em"
+                               :align :end
+                               :children [[re-com/label :label "Color"]
+                                          [comps/color-picker color]]]]]
                   [re-com/button
                    :label "Create"
                    :on-click #(do
-                                (re-frame/dispatch [::events/create-deck @label])
+                                (re-frame/dispatch [::events/create-deck @label (log/spy :info @color)])
                                 (reset! label nil))]]])))
 
 (defn deck-item
@@ -183,16 +198,18 @@
            :border-right "1px solid lightgray"}
    :justify :between
    :children [[re-com/box
-               :padding "8px"
+               :padding "4px"
+               :style {:background-color (str "#" (:color deck))
+                       :border "1px solid lightgray"
+                       :border-radius "0.5em"}
                :child [re-com/label :label (:label deck)]]
-              [re-com/h-box
-               :gap "1em"
-               :padding "8px"
-               :children [[re-com/md-icon-button
-                           :md-icon-name "zmdi-delete"
-                           :style {:float :right}
-                           :on-click #(re-frame/dispatch
-                                       [::events/delete-deck (:id deck)])]]]]])
+              [re-com/box
+               :padding "4px"
+               :child [re-com/md-icon-button
+                       :md-icon-name "zmdi-delete"
+                       :style {:float :right}
+                       :on-click #(re-frame/dispatch
+                                   [::events/delete-deck (:id deck)])]]]])
 
 (defn decks-panel
   []

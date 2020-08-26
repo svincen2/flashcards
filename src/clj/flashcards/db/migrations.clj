@@ -2,7 +2,6 @@
   (:require [flashcards.db :as db]
             [ragtime.jdbc :as jdbc]
             [ragtime.repl :as repl]
-            [clojure.java.io :as io]
             [clojure.string :as string])
   (:import [java.time LocalDate]
            [java.time.format DateTimeFormatter]))
@@ -29,3 +28,14 @@
                        ["up" "down"])]
     (spit (str "resources/migrations/" up) (str "-- " table ": " description))
     (spit (str "resources/migrations/" down) (str "-- " table ": " description))))
+
+(comment
+
+  (create-migration "decks" "add column color")
+
+  (migrate)
+
+  (rollback)
+
+
+  )

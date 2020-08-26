@@ -6,7 +6,8 @@
              :columns [:id
                        :created-at
                        :updated-at
-                       :label]})
+                       :label
+                       :color]})
 
 (defn fetch
   []
@@ -15,9 +16,10 @@
              :order-by [[:created-at :desc]]}))
 
 (defn create!
-  [label]
+  [label color]
   (db/insert! (:table schema)
-              {:label label}))
+              {:label label
+               :color color}))
 
 (defn delete-by-id!
   [id]

@@ -77,8 +77,8 @@
 
 (re-frame/reg-event-fx
  ::create-deck
- (fn [_ [_ label]]
-   (let [req {:edn-params {:label label}
+ (fn [_ [_ label color]]
+   (let [req {:edn-params {:label label :color color}
               :with-credentials? false}]
      (am/go
        (let [{:keys [status] :as res} (a/<! (http/post (str api-url "decks") req))]

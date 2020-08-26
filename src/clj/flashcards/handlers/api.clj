@@ -41,8 +41,8 @@
   (-> (r/ok (d/fetch))))
 
 (defn create-deck
-  [{{:keys [label]} :edn-body}]
-  (r/ok (d/create! label)))
+  [{{:keys [label color]} :edn-body}]
+  (r/ok (d/create! label color)))
 
 (defn delete-deck
   [{{:keys [id]} :edn-body}]
