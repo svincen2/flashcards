@@ -8,8 +8,19 @@
    [flashcards.subs :as subs]
    [taoensso.timbre :as log]))
 
-;; Quizzes
+;; General
 
+(defn deck-badge
+  [{:keys [color label]}]
+  [re-com/box
+   :padding "4px"
+   :style {:background-color (str "#" color)
+           :border "1px solid gray"
+           :border-radius "0.5em"}
+   :child [re-com/label
+           :label label]])
+
+;; Quizzes
 
 (defn quiz-panel
   []
@@ -21,10 +32,9 @@
        :children (mapv (fn [card]
                          [re-com/v-box
                           :gap "1em"
-                          :height "250px"
+                          :height "450px"
                           :width "100%"
-                          :style {:border-bottom "1px solid lightgray"
-                                  :padding-bottom "1em"}
+                          :style {:border-bottom "1px solid lightgray"}
                           :justify :between
                           :children [[re-com/box
                                       :width "100%"
@@ -99,31 +109,23 @@
   [{:keys [id question answer deck-id]} decks]
   [re-com/v-box
    :padding "8px"
-   :style {:border-left "1px solid lightgray"
-           :border-bottom "1px solid lightgray"
-           :border-right "1px solid lightgray"}
+   :style {:border-bottom "1px solid lightgray"}
    :children [[re-com/h-box
-               :style {:border-bottom "1px dashed lightgray"}
+               :style {:border-bottom "1px dashed lightgray"
+                       :padding-bottom "8px"
+                       :padding-left "8px"}
                :justify :between
                :children [[re-com/h-box
                            :gap "1em"
-                           :padding "8px"
+                           :align :center
                            :width "400px"
                            :children [[re-com/label :label "Q:"]
                                       [:p
                                        {:style {:margin-bottom "0px"}}
                                        question]]]
                           [re-com/h-box
-                           :padding "8px"
                            :gap "1em"
-                           :children [(when deck-id
-                                        [re-com/box
-                                         :padding "4px"
-                                         :style {:background-color (str "#" (get-in decks [deck-id :color]))
-                                                 :border "1px solid lightgray"
-                                                 :border-radius "0.5em"}
-                                         :child [re-com/label
-                                                 :label (get-in decks [deck-id :label])]])
+                           :children [(when deck-id [deck-badge (get decks deck-id)])
                                       [re-com/box
                                        :padding "4px"
                                        :child [re-com/md-icon-button
@@ -133,9 +135,10 @@
                                                     [::events/delete-flashcard id])]]]]]]
               [re-com/h-box
                :gap "1em"
-               :padding "8px"
+               :align :center
                :width "400px"
-               :style {:margin-top "8px"}
+               :style {:padding-top "8px"
+                       :padding-left "8px"}
                :children [[re-com/label :label "A:"]
                           [:p
                            {:style {:margin-bottom "0px"}}
@@ -186,23 +189,18 @@
                   [re-com/button
                    :label "Create"
                    :on-click #(do
-                                (re-frame/dispatch [::events/create-deck @label (log/spy :info @color)])
+                                (re-frame/dispatch [::events/create-deck @label @color])
                                 (reset! label nil))]]])))
 
 (defn deck-item
   [deck]
   [re-com/h-box
    :padding "8px"
-   :style {:border-left "1px solid lightgray"
-           :border-bottom "1px solid lightgray"
-           :border-right "1px solid lightgray"}
+   :style {:border-bottom "1px solid lightgray"}
    :justify :between
    :children [[re-com/box
-               :padding "4px"
-               :style {:background-color (str "#" (:color deck))
-                       :border "1px solid lightgray"
-                       :border-radius "0.5em"}
-               :child [re-com/label :label (:label deck)]]
+               :style {:padding-left "8px"}
+               :child [deck-badge deck]]
               [re-com/box
                :padding "4px"
                :child [re-com/md-icon-button
@@ -240,7 +238,6 @@
      :height "100%"
      :align :center
      :children [[re-com/v-box
-                 :gap "1em"
                  :width "650px"
                  :children [[re-com/box
                              :align :center
@@ -254,7 +251,11 @@
                                     {:id :decks :label "Decks"}
                                     {:id :quiz :label "Quiz"}]
                              :on-change #(re-frame/dispatch [::events/set-active-tab %])]
-                            (case @active-tab
-                              :cards [cards-panel]
-                              :decks [decks-panel]
-                              :quiz [quiz-panel])]]]]))
+                            [re-com/box
+                             :style {:border-left "1px solid lightgray"
+                                     :border-bottom "1px solid lightgray"
+                                     :border-right "1px solid lightgray"}
+                             :child (case @active-tab
+                                      :cards [cards-panel]
+                                      :decks [decks-panel]
+                                      :quiz [quiz-panel])]]]]]))

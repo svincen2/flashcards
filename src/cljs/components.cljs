@@ -40,11 +40,12 @@
     (fn [& opts]
       (let [{:keys [children on-click]} opts]
         [re-com/v-box
-         :gap "1em"
          :align :center
          :children [(get children @next-child)
+                    [re-com/line]
                     [re-com/h-box
                      :gap "1em"
+                     :padding "8px"
                      :children [[re-com/md-icon-button
                                  :md-icon-name "zmdi-chevron-left"
                                  :disabled? (= @next-child 0)

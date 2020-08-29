@@ -14,7 +14,6 @@
 
 (def ^:private routes
   {::api-ping {:handler :api/ping}
-   ::api-echo {:handler :api/echo}
    ::api-flashcards {:handler :api/flashcards}
    ::api-decks {:handler :api/decks}
    ::app-root {:handler :app/root}

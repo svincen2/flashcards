@@ -42,7 +42,6 @@
    :app/resource {:get (fn [{{resource :resource} :route-params}]
                          (r/resource-with-mime-type resource {:root "public"}))}
    :api/ping {:get (fn [_] (api/ping))}
-   :api/echo {:post api/echo}
    :api/flashcards {:get (fn [_] (api/get-flashcards))
                     :post api/create-flashcard
                     :delete api/delete-flashcard
