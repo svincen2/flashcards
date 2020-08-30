@@ -88,7 +88,7 @@
                                :width "250px"
                                :children [[re-com/label :label "Add to deck"]
                                           [re-com/single-dropdown
-                                           :choices (into [{:id :default :label "Default"}]
+                                           :choices (into [{:id :default :label "default"}]
                                                           (map (fn [{:keys [id label]}]
                                                                  {:id id :label label})
                                                                @decks))
@@ -102,8 +102,7 @@
                                     d (let [d  @deck] (if (= :default d) nil d))]
                                 (re-frame/dispatch [::events/create-flashcard q a d])
                                 (reset! question nil)
-                                (reset! answer nil)
-                                (reset! deck :default))]]])))
+                                (reset! answer nil))]]])))
 
 (defn cards-item
   [{:keys [id question answer deck-id]} decks]
@@ -125,9 +124,9 @@
                                        question]]]
                           [re-com/h-box
                            :gap "1em"
+                           :align :center
                            :children [(when deck-id [deck-badge (get decks deck-id)])
                                       [re-com/box
-                                       :padding "4px"
                                        :child [re-com/md-icon-button
                                         :md-icon-name "zmdi-delete"
                                         :style {:float :right}
@@ -165,6 +164,8 @@
 
 ;; Decks
 
+(def ^:private deck-label-re #"^([a-z]*|[a-z0-9\-]*)$")
+
 (defn new-deck-panel
   []
   (let [label (r/atom nil)
@@ -180,6 +181,8 @@
                                :children [[re-com/label :label "Label"]
                                           [re-com/input-text
                                            :model label
+                                           :validation-regex deck-label-re
+                                           :change-on-blur? false
                                            :on-change #(reset! label %)]]]
                               [re-com/v-box
                                :gap "1em"
@@ -188,12 +191,13 @@
                                           [comps/color-picker color]]]]]
                   [re-com/button
                    :label "Create"
+                   :disabled? (empty? @label)
                    :on-click #(do
                                 (re-frame/dispatch [::events/create-deck @label @color])
                                 (reset! label nil))]]])))
 
 (defn deck-item
-  [deck]
+  [deck cards]
   [re-com/h-box
    :padding "8px"
    :style {:border-bottom "1px solid lightgray"}
@@ -201,17 +205,24 @@
    :children [[re-com/box
                :style {:padding-left "8px"}
                :child [deck-badge deck]]
-              [re-com/box
-               :padding "4px"
-               :child [re-com/md-icon-button
-                       :md-icon-name "zmdi-delete"
-                       :style {:float :right}
-                       :on-click #(re-frame/dispatch
-                                   [::events/delete-deck (:id deck)])]]]])
+
+              [re-com/h-box
+               :gap "1em"
+               :justify :end
+               :align :center
+               :children [[:span (count (filter #(= (:id deck) (:deck-id %)) cards))]
+                          [re-com/md-icon-button
+                           :md-icon-name "zmdi-delete"
+                           :style {:float :right}
+                           :disabled? (not (:id deck))
+                           :on-click #(re-frame/dispatch
+                                       [::events/delete-deck (:id deck)])]]]]])
 
 (defn decks-panel
   []
-  (let [decks (re-frame/subscribe [::subs/decks])]
+  (let [decks (re-frame/subscribe [::subs/decks])
+        cards (re-frame/subscribe [::subs/flashcards])
+        default-deck {:id nil :label "default" :color "ffffff"}]
     [re-com/v-box
      :width "100%"
      :children (into
@@ -224,9 +235,11 @@
                   :v-scroll :auto
                   :height "450px"
                   :child [re-com/v-box
-                          :children (for [deck @decks]
-                                      ^{:key (:id deck)}
-                                      [deck-item deck])]]])]))
+                          :children (concat
+                                     [[deck-item default-deck @cards]]
+                                     (for [deck @decks]
+                                       ^{:key (:id deck)}
+                                       [deck-item deck @cards]))]]])]))
 
 ;; main
 
