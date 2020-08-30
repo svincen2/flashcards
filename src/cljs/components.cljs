@@ -63,17 +63,20 @@
 
 (defn color-picker-slider
   [& opts]
-  (let [{:keys [model on-change]} opts]
-    [re-com/slider
-     :model model
-     :width "250px"
-     :on-change #(do
-                   (reset! model %)
-                   (when on-change
-                     (on-change)))
-     :min 0
-     :max 256
-     :step 1]))
+  (let [{:keys [label model on-change]} opts]
+    [re-com/h-box
+     :gap "1em"
+     :children [[re-com/slider
+                 :model model
+                 :width "250px"
+                 :on-change #(do
+                               (reset! model %)
+                               (when on-change
+                                 (on-change)))
+                 :min 0
+                 :max 255
+                 :step 1]
+                [re-com/label :label label]]]))
 
 (defn color-picker
   [model]
@@ -98,11 +101,14 @@
                   [re-com/v-box
                    :gap "1em"
                    :children [[color-picker-slider
+                               :label "r"
                                :model red
                                :on-change on-change]
                               [color-picker-slider
+                               :label "g"
                                :model green
                                :on-change on-change]
                               [color-picker-slider
+                               :label "b"
                                :model blue
                                :on-change on-change]]]]])))
