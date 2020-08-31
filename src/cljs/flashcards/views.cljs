@@ -24,7 +24,7 @@
 
 (defn quiz-panel
   []
-  (let [quiz-cards (shuffle @(re-frame/subscribe [::subs/flashcards]))
+  (let [quiz-cards (shuffle @(re-frame/subscribe [::subs/cards]))
         revealed? (r/atom false)]
     (fn []
       [comps/paginated-panels-component
@@ -42,8 +42,7 @@
                                       :align :center
                                       :child [re-com/title
                                               :level :level2
-                                              :label (:question card)
-                                              :style {:align-text :center}]]
+                                              :label (:question card)]]
                                      [re-com/box
                                       :width "100%"
                                       :padding "8px"
@@ -62,7 +61,7 @@
   []
   (let [question (r/atom nil)
         answer (r/atom nil)
-        deck (r/atom :default)
+        deck-ids (r/atom #{})
         decks (re-frame/subscribe [::subs/decks])]
     (fn []
       [re-com/v-box
@@ -86,26 +85,26 @@
                                :align :end
                                :justify :start
                                :width "250px"
-                               :children [[re-com/label :label "Add to deck"]
-                                          [re-com/single-dropdown
-                                           :choices (into [{:id :default :label "default"}]
-                                                          (map (fn [{:keys [id label]}]
-                                                                 {:id id :label label})
-                                                               @decks))
-                                           :model deck
-                                           :on-change #(reset! deck %)
+                               :children [[re-com/label :label "Add to decks"]
+                                          [re-com/selection-list
+                                           :choices (map (fn [{:keys [id label]}]
+                                                           {:id id :label label})
+                                                         @decks)
+                                           :model deck-ids
+                                           :on-change #(reset! deck-ids %)
                                            :width "100%"]]]]]
                   [re-com/button
                    :label "Create"
+                   :disabled? (and (empty? @question) (empty? @answer))
                    :on-click #(let [q @question
                                     a @answer
-                                    d (let [d  @deck] (if (= :default d) nil d))]
-                                (re-frame/dispatch [::events/create-flashcard q a d])
+                                    d (let [ids  @deck-ids] (if (seq ids) ids nil))]
+                                (re-frame/dispatch [::events/create-card q a d])
                                 (reset! question nil)
                                 (reset! answer nil))]]])))
 
 (defn cards-item
-  [{:keys [id question answer deck-id]} decks]
+  [{:keys [id question answer deck-ids]} decks]
   [re-com/v-box
    :padding "8px"
    :style {:border-bottom "1px solid lightgray"}
@@ -125,13 +124,20 @@
                           [re-com/h-box
                            :gap "1em"
                            :align :center
-                           :children [(when deck-id [deck-badge (get decks deck-id)])
-                                      [re-com/box
-                                       :child [re-com/md-icon-button
-                                        :md-icon-name "zmdi-delete"
-                                        :style {:float :right}
-                                        :on-click #(re-frame/dispatch
-                                                    [::events/delete-flashcard id])]]]]]]
+                           :children (let [decks (->> deck-ids
+                                                      (filter identity)
+                                                      (map (partial get decks))
+                                                      (sort-by :label))]
+                                       (cond-> []
+                                         (seq deck-ids) (into (mapv (fn [deck]
+                                                                      [deck-badge deck])
+                                                                    decks))
+                                         :always (conj [re-com/box
+                                                        :child [re-com/md-icon-button
+                                                                :md-icon-name "zmdi-delete"
+                                                                :style {:float :right}
+                                                                :on-click #(re-frame/dispatch
+                                                                            [::events/delete-card id])]])))]]]
               [re-com/h-box
                :gap "1em"
                :align :center
@@ -145,7 +151,7 @@
 
 (defn cards-panel
   []
-  (let [flashcards (re-frame/subscribe [::subs/flashcards])
+  (let [cards (re-frame/subscribe [::subs/cards])
         decks (re-frame/subscribe [::subs/decks])]
     [re-com/v-box
      :width "100%"
@@ -158,9 +164,11 @@
                  :v-scroll :auto
                  :height "450px"
                  :child [re-com/v-box
-                         :children (for [flashcard @flashcards]
-                                     ^{:key (:id flashcard)}
-                                     [cards-item flashcard (into {} (map (fn [d] {(:id d) d}) @decks))])]]]]))
+                         :children (for [card @cards]
+                                     ^{:key (:id card)}
+                                     [cards-item
+                                      card
+                                      (into {} (map (fn [d] {(:id d) d}) @decks))])]]]]))
 
 ;; Decks
 
@@ -205,12 +213,11 @@
    :children [[re-com/box
                :style {:padding-left "8px"}
                :child [deck-badge deck]]
-
               [re-com/h-box
                :gap "1em"
                :justify :end
                :align :center
-               :children [[:span (count (filter #(= (:id deck) (:deck-id %)) cards))]
+               :children [[:span (count (filter #(contains? (set (:deck-ids % [nil])) (:id deck)) cards))]
                           [re-com/md-icon-button
                            :md-icon-name "zmdi-delete"
                            :style {:float :right}
@@ -221,7 +228,7 @@
 (defn decks-panel
   []
   (let [decks (re-frame/subscribe [::subs/decks])
-        cards (re-frame/subscribe [::subs/flashcards])
+        cards (re-frame/subscribe [::subs/cards])
         default-deck {:id nil :label "default" :color "ffffff"}]
     [re-com/v-box
      :width "100%"
@@ -244,7 +251,7 @@
 ;; main
 
 (defn main-panel []
-  (re-frame/dispatch [::events/fetch-flashcards])
+  (re-frame/dispatch [::events/fetch-cards])
   (re-frame/dispatch [::events/fetch-decks])
   (let [active-tab (re-frame/subscribe [::subs/active-tab])]
     [re-com/v-box

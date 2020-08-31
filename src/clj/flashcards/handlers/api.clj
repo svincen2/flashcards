@@ -1,6 +1,6 @@
 (ns flashcards.handlers.api
   (:require [flashcards.server.response :as r]
-            [flashcards.models.flashcards :as f]
+            [flashcards.models.cards :as c]
             [flashcards.models.decks :as d]
             [taoensso.timbre :as log]))
 
@@ -8,8 +8,8 @@
   [resource {{origin "origin"} :headers}]
   (let [allowed-origins #{"http://localhost:8280"
                           "http://localhost:3000"}
-        access {:flashcards {:methods ["GET" "POST" "DELETE"]
-                             :headers ["Content-Type"]}
+        access {:cards {:methods ["GET" "POST" "DELETE"]
+                        :headers ["Content-Type"]}
                 :decks {:methods ["GET" "POST" "DELETE"]
                         :headers ["Content-Type"]}}]
     (if (contains? allowed-origins origin)
@@ -20,21 +20,17 @@
   []
   (r/ok {:message "pong"}))
 
-(defn echo
-  [{:keys [edn-body]}]
-  (r/ok edn-body))
-
-(defn get-flashcards
+(defn get-cards
   []
-  (-> (r/ok (f/fetch))))
+  (-> (r/ok (c/fetch-with-deck-ids))))
 
-(defn create-flashcard
-  [{{:keys [question answer deck-id]} :edn-body}]
-  (r/ok (f/create! question answer deck-id)))
+(defn create-card
+  [{{:keys [question answer deck-ids]} :edn-body}]
+  (r/ok (c/create! question answer deck-ids)))
 
-(defn delete-flashcard
+(defn delete-card
   [{{:keys [id]} :edn-body}]
-  (r/ok (f/delete! id)))
+  (r/ok (c/delete! id)))
 
 (defn get-decks
   []

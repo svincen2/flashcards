@@ -42,10 +42,10 @@
    :app/resource {:get (fn [{{resource :resource} :route-params}]
                          (r/resource-with-mime-type resource {:root "public"}))}
    :api/ping {:get (fn [_] (api/ping))}
-   :api/flashcards {:get (fn [_] (api/get-flashcards))
-                    :post api/create-flashcard
-                    :delete api/delete-flashcard
-                    :options (partial api/access-control :flashcards)}
+   :api/cards {:get (fn [_] (api/get-cards))
+                    :post api/create-card
+                    :delete api/delete-card
+                    :options (partial api/access-control :cards)}
    :api/decks {:get (fn [_] (api/get-decks))
                :post api/create-deck
                :delete api/delete-deck

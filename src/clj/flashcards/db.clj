@@ -11,6 +11,42 @@
            :dbname "flashcards"
            :host "localhost"})
 
+(defn ^:private prefixed-column
+  [prefix column]
+  (keyword (str (name prefix) \. (name column))))
+
+(defn ^:private prefixed-columns
+  [prefix columns]
+  (map (partial prefixed-column prefix) columns))
+
+(defn columns
+  ([schema]
+   (columns schema (:columns schema)))
+  ([schema columns]
+   (prefixed-columns (:table schema) columns)))
+
+(defn aliased-columns
+  ([schema]
+   (aliased-columns schema (:columns schema)))
+  ([schema columns]
+   (prefixed-columns (:alias schema) columns)))
+
+(defn column
+  [schema column]
+  (prefixed-column (:table schema) column))
+
+(defn aliased-column
+  [schema column]
+  (prefixed-column (:alias schema) column))
+
+(defn table
+  [schema]
+  (:table schema))
+
+(defn aliased-table
+  [schema]
+  [(:table schema) (:alias schema)])
+
 (defn ^:private clj->sql
   [x]
   (-> x
@@ -78,4 +114,8 @@
 
   (insert! :flashcards {:question "Hello?"
                         :answer "Goodbye"
-                        :created-at (Instant/now)}))
+                        :created-at (Instant/now)})
+
+  (aliased-columns {:alias :a :columns [:b :c :d]})
+  (aliased-table {:table :a-table :alias :a :columns [:b :c :d]})
+  )

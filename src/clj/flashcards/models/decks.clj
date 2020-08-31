@@ -3,6 +3,7 @@
             [taoensso.timbre :as log]))
 
 (def schema {:table :decks
+             :alias :d
              :columns [:id
                        :created-at
                        :updated-at
@@ -11,8 +12,8 @@
 
 (defn fetch
   []
-  (db/query {:select (:columns schema)
-             :from [(:table schema)]
+  (db/query {:select (db/columns schema)
+             :from [(db/table schema)]
              :order-by [[:created-at :desc]]}))
 
 (defn create!

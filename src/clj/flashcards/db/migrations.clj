@@ -3,7 +3,7 @@
             [ragtime.jdbc :as jdbc]
             [ragtime.repl :as repl]
             [clojure.string :as string])
-  (:import [java.time LocalDate]
+  (:import [java.time LocalDateTime]
            [java.time.format DateTimeFormatter]))
 
 (defn config
@@ -21,7 +21,8 @@
 
 (defn create-migration
   [table description]
-  (let [today (.format (LocalDate/now) DateTimeFormatter/BASIC_ISO_DATE)
+  (let [format (DateTimeFormatter/ofPattern "yyyyMMddHHmm")
+        today (.format (LocalDateTime/now) format)
         name (string/split description #"\s+")
         [up down] (map (fn [type]
                          (str today \_ table \_ (string/join \- name) \. type ".sql"))
@@ -31,7 +32,10 @@
 
 (comment
 
-  (create-migration "decks" "add column color")
+
+
+
+  (create-migration "cards" "drop column deck_id")
 
   (migrate)
 

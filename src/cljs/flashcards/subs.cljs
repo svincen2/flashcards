@@ -8,9 +8,9 @@
    (:name db)))
 
 (re-frame/reg-sub
- ::flashcards
+ ::cards
  (fn [db _]
-   (:flashcards db)))
+   (:cards db)))
 
 (re-frame/reg-sub
  ::decks

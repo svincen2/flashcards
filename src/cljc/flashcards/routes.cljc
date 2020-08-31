@@ -8,13 +8,13 @@
     ["api"
      [["/ping" ::api-ping]
       ["/echo" ::api-echo]
-      ["/flashcards" ::api-flashcards]
+      ["/cards" ::api-cards]
       ["/decks" ::api-decks]]]
     [[:resource] ::app-resource]]])
 
 (def ^:private routes
   {::api-ping {:handler :api/ping}
-   ::api-flashcards {:handler :api/flashcards}
+   ::api-cards {:handler :api/cards}
    ::api-decks {:handler :api/decks}
    ::app-root {:handler :app/root}
    ::app-resource {:handler :app/resource}
